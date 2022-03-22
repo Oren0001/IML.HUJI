@@ -160,9 +160,8 @@ class MultivariateGaussian:
         self.cov_ = np.zeros((n, n))
         for i in range(n):
             for j in range(n):
-                pair = np.concatenate((X[:, i] - self.mu_[i], X[:, j] - self.mu_[j]),
-                                      axis=0)
-                self.cov_[i, j] = 1 / (n - 1) * np.sum(np.sum(pair, axis=0))
+                self.cov_[i, j] = 1 / (n - 1) * np.sum(
+                    np.prod(X[:, [i, j]] - self.mu_[[i, j]], axis=1))
 
         self.fitted_ = True
         return self
@@ -189,12 +188,13 @@ class MultivariateGaussian:
             raise ValueError(
                 "Estimator must first be fitted before calling `pdf` function")
 
-        n = X.shape[1]
-        pdfs = np.zeros((n,))
-        for i in range(n):
-            v = X[:, i] - self.mu_
-            pdfs[i] = np.exp(-(v @ inv(self.cov_) @ v) / 2) / np.sqrt(
-                np.power(2 * np.pi, n) * det(self.cov_))
+        pdfs = np.zeros((X.shape[0],))
+        const = np.sqrt(np.power(2 * np.pi, X.shape[1]) * det(self.cov_))
+        cov_inv = inv(self.cov_)
+        for i in range(X.shape[0]):
+            v = X[i, :] - self.mu_
+            pdfs[i] = np.exp(-v @ cov_inv @ v / 2) / const
+
         return pdfs
 
     @staticmethod
@@ -216,4 +216,12 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated over all input data and under given parameters of Gaussian
         """
-        raise NotImplementedError()
+        n = X.shape[1]
+        const1 = n * np.log(det(cov))
+        const2 = n * np.log(2 * np.pi)
+        cov_inv = inv(cov)
+        v = np.zeros((n,))
+        for i in range(n):
+            u = X[i, :] - mu
+            v[i] = u @ cov_inv @ u
+        return -(const1 + np.sum(v) + const2) / 2
