@@ -18,7 +18,6 @@ SAMPLES_NUM = 1000
 
 
 def test_univariate_gaussian():
-    return
     # Question 1 - Draw samples and print fitted model
     samples = np.random.normal(UNIVARIATE_MU, VAR, SAMPLES_NUM)
     x = np.arange(SAMPLES_NUM)
@@ -60,10 +59,13 @@ def test_multivariate_gaussian():
     samples = numpy.random.multivariate_normal(MULTIVARIATE_MU, COV, SAMPLES_NUM)
     n = samples.shape[0]
     fig4 = go.Figure([
-        go.Scatter(x=['x1']*n, y=samples[:, 0], mode="markers", marker=dict(color="Red")),
-        go.Scatter(x=['x2']*n, y=samples[:, 1], mode="markers", marker=dict(color="Green")),
-        go.Scatter(x=['x3']*n, y=samples[:, 2], mode="markers", marker=dict(color="Blue")),
-        go.Scatter(x=['x4']*n, y=samples[:, 3], mode="markers", marker=dict(color="pink"))],
+        go.Scatter(x=['x1'] * n, y=samples[:, 0], mode="markers", marker=dict(color="Red")),
+        go.Scatter(x=['x2'] * n, y=samples[:, 1], mode="markers",
+                   marker=dict(color="Green")),
+        go.Scatter(x=['x3'] * n, y=samples[:, 2], mode="markers",
+                   marker=dict(color="Blue")),
+        go.Scatter(x=['x4'] * n, y=samples[:, 3], mode="markers",
+                   marker=dict(color="pink"))],
         layout=go.Layout(title=r"$\text{1000 Samples: x1,...,x1000 iid~ N}(\mu, \Sigma)$",
                          xaxis_title="Random Variables", yaxis_title="Sample Values",
                          showlegend=False, height=700, width=400))
@@ -80,17 +82,16 @@ def test_multivariate_gaussian():
             mu = np.array([v[i], 0, v[j], 0])
             log_likelihood[i, j] = MultivariateGaussian().log_likelihood(mu, COV, samples)
     fig5 = go.Figure([go.Heatmap(x=v, y=v, z=log_likelihood)],
-                     layout=go.Layout(title="Likelihood Evaluation",
+                     layout=go.Layout(title="Log-likelihood Evaluation",
                                       xaxis_title="f3", yaxis_title="f1",
-                                      showlegend=False, height=600, width=600))
+                                      showlegend=False, height=700, width=700))
     fig5.show()
 
     # Question 6 - Maximum likelihood
-    # print(v[np.argmax(np.max(log_likelihood, axis=1))], '\n',
-    #       v[np.argmax(np.max(log_likelihood, axis=0))])
+    f1_max = v[np.max(np.argmax(log_likelihood, axis=0))]
+    f3_max = v[np.max(np.argmax(log_likelihood, axis=1))]
+    print(f"(f1, f3) = ({f1_max:0.3f}, {f3_max:0.3f})")
 
-    print(np.max(log_likelihood, axis=1), '\n',
-          np.max(log_likelihood, axis=0))
 
 if __name__ == '__main__':
     np.random.seed(0)

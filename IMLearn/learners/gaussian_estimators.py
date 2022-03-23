@@ -217,11 +217,12 @@ class MultivariateGaussian:
             log-likelihood calculated over all input data and under given parameters of Gaussian
         """
         n = X.shape[1]
-        const1 = n * np.log(det(cov))
-        const2 = n * np.log(2 * np.pi)
+        m = X.shape[0]
+        const1 = n * slogdet(cov)[1]
+        const2 = n * m * np.log(2 * np.pi)
         cov_inv = inv(cov)
-        v = np.zeros((n,))
-        for i in range(n):
+        v = np.zeros((m,))
+        for i in range(m):
             u = X[i, :] - mu
             v[i] = u @ cov_inv @ u
         return -(const1 + np.sum(v) + const2) / 2
