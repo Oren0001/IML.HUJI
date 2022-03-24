@@ -57,7 +57,7 @@ class UnivariateGaussian:
         self.mu_ = np.mean(X)
 
         temp = np.power(X - self.mu_, 2)
-        self.var_ = 1 / (len(X) - 1) * np.sum(temp)
+        self.var_ = 1 / (X.shape[0] - 1) * np.sum(temp)
 
         self.fitted_ = True
         return self
@@ -84,8 +84,8 @@ class UnivariateGaussian:
             raise ValueError(
                 "Estimator must first be fitted before calling `pdf` function")
 
-        return np.exp(-np.power(X - self.mu_, 2) / 2 * self.var_) / np.sqrt(
-            2 * np.pi * self.var_)
+        const = np.sqrt(2 * np.pi * self.var_)
+        return np.exp(-np.power(X - self.mu_, 2) / 2 * self.var_) / const
 
     @staticmethod
     def log_likelihood(mu: float, sigma: float, X: np.ndarray) -> float:
@@ -106,8 +106,8 @@ class UnivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        return float(np.log(np.prod(np.exp(-np.power(X - mu, 2) / 2 * sigma) / np.sqrt(
-            2 * np.pi * sigma))))
+        const = np.sqrt(2 * np.pi * sigma)
+        return float(np.sum(np.log(np.exp(-np.power(X - mu, 2) / 2 * sigma) / const)))
 
 
 class MultivariateGaussian:
@@ -160,7 +160,7 @@ class MultivariateGaussian:
         self.cov_ = np.zeros((n, n))
         for i in range(n):
             for j in range(n):
-                self.cov_[i, j] = 1 / (n - 1) * np.sum(
+                self.cov_[i, j] = 1 / (X.shape[0] - 1) * np.sum(
                     np.prod(X[:, [i, j]] - self.mu_[[i, j]], axis=1))
 
         self.fitted_ = True
@@ -225,4 +225,4 @@ class MultivariateGaussian:
         for i in range(m):
             u = X[i, :] - mu
             v[i] = u @ cov_inv @ u
-        return -(const1 + np.sum(v) + const2) / 2
+        return float(-(const1 + np.sum(v) + const2) / 2)

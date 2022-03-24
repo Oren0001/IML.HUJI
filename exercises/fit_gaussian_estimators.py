@@ -60,12 +60,9 @@ def test_multivariate_gaussian():
     n = samples.shape[0]
     fig4 = go.Figure([
         go.Scatter(x=['x1'] * n, y=samples[:, 0], mode="markers", marker=dict(color="Red")),
-        go.Scatter(x=['x2'] * n, y=samples[:, 1], mode="markers",
-                   marker=dict(color="Green")),
-        go.Scatter(x=['x3'] * n, y=samples[:, 2], mode="markers",
-                   marker=dict(color="Blue")),
-        go.Scatter(x=['x4'] * n, y=samples[:, 3], mode="markers",
-                   marker=dict(color="pink"))],
+        go.Scatter(x=['x2'] * n, y=samples[:, 1], mode="markers", marker=dict(color="Green")),
+        go.Scatter(x=['x3'] * n, y=samples[:, 2], mode="markers", marker=dict(color="Blue")),
+        go.Scatter(x=['x4'] * n, y=samples[:, 3], mode="markers", marker=dict(color="pink"))],
         layout=go.Layout(title=r"$\text{1000 Samples: x1,...,x1000 iid~ N}(\mu, \Sigma)$",
                          xaxis_title="Random Variables", yaxis_title="Sample Values",
                          showlegend=False, height=700, width=400))
