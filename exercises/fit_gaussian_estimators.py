@@ -89,8 +89,18 @@ def test_multivariate_gaussian():
     f3_max = v[np.max(np.argmax(log_likelihood, axis=1))]
     print(f"(f1, f3) = ({f1_max:0.3f}, {f3_max:0.3f})")
 
+# def question_1_quiz():
+#     # Question 3
+#     samples = np.array([1, 5, 2, 3, 8, -4, -2, 5, 1, 10, -10, 4, 5, 2, 7, 1, 1, 3, 2, -1,
+#                         -3, 1, -4, 1, 2, 1, -4, -4, 1, 3, 2, 6, -6, 8, 3, -6, 4, 1, -2,
+#                         3, 1, 4, 1, 4, -2, 3, -1, 0, 3, 5, 0, -2])
+#     u = UnivariateGaussian()
+#     print(u.log_likelihood(1, 1, samples))
+#     print(u.log_likelihood(10, 1, samples))
+
 
 if __name__ == '__main__':
     np.random.seed(0)
     test_univariate_gaussian()
     test_multivariate_gaussian()
+    # question_1_quiz()
