@@ -10,6 +10,8 @@ import plotly.io as pio
 
 pio.templates.default = "simple_white"
 
+DEGREE = 6
+
 
 def load_data(filename: str) -> pd.DataFrame:
     """
@@ -40,6 +42,22 @@ def load_data(filename: str) -> pd.DataFrame:
 
 
 def question_2(data):
+    """
+    Plots 2 graphs: Temperature change as a function of 'DayOfYear', and STD of daily
+                    temperatures as a function of 'Month'.
+
+    Parameters
+    ----------
+    data: preprocessed of city temperature dataset
+
+    Returns
+    -------
+    A tuple of:
+    1. A design matrix which in this case is a vector that will later be transformed
+       to a vandermonde matrix.Note that the samples are only from Israel.
+    2. A response vector that corresponds with the design matrix.
+
+    """
     data = data[data["Israel"] == 1].drop(["Israel", "Jordan", "South Africa",
                                            "The Netherlands"], 1).reset_index(drop=True)
     data_copy = data
@@ -57,6 +75,13 @@ def question_2(data):
 
 
 def question_3(data):
+    """
+    Plots average temperature as a function of "Month with Error Bars of STD.
+
+    Parameters
+    ----------
+    data: preprocessed of city temperature dataset.
+    """
     data = data.groupby(["Israel", "Jordan", "South Africa", "The Netherlands", "Month"]).agg(
         {"Temp": (np.std, np.average)}).reset_index()
     data.columns = ["Israel", "Jordan", "South Africa", "The Netherlands",
@@ -91,6 +116,16 @@ def question_3(data):
 
 
 def question_4(X, y):
+    """
+    Plots MSE as a function of polynomial degrees.
+
+    Parameters
+    ----------
+    X: A design matrix which in this case is a vector that will be transformed
+       to a vandermonde matrix.Note that the samples are only from Israel.
+    y: A response vector that corresponds with the design matrix.
+
+    """
     train_X, train_y, test_X, test_y = split_train_test(X, y)
     losses = np.zeros((10,))
     degrees = np.arange(1, 11)
@@ -103,7 +138,17 @@ def question_4(X, y):
 
 
 def question_5(data, X, y):
-    lr = PolynomialFitting(6).fit(X, y)
+    """
+    Plots MSE as a function of countries given a specific polynomial degree.
+
+    Parameters
+    ----------
+    data: preprocessed of city temperature dataset.
+    X: A design matrix which in this case is a vector that will be transformed
+       to a vandermonde matrix.Note that the samples are only from Israel.
+    y: A response vector that corresponds with the design matrix.
+    """
+    lr = PolynomialFitting(DEGREE).fit(X, y)
     countries = ["Jordan", "South Africa", "The Netherlands"]
     losses = np.zeros((3,))
     for i, country in enumerate(countries):
@@ -114,7 +159,7 @@ def question_5(data, X, y):
 
     res = pd.DataFrame(data={"Countries": countries, "MSE": losses})
     px.bar(res, x="Countries", y="MSE", title="MSE As a Function of Countries Given "
-                                              "Polynomial Degree of 6").show()
+                                              f"Polynomial Degree of {DEGREE}").show()
 
 
 if __name__ == '__main__':
