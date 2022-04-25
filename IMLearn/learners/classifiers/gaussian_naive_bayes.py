@@ -2,10 +2,12 @@ from typing import NoReturn
 from ...base import BaseEstimator
 import numpy as np
 
+
 class GaussianNaiveBayes(BaseEstimator):
     """
     Gaussian Naive-Bayes classifier
     """
+
     def __init__(self):
         """
         Instantiate a Gaussian Naive Bayes classifier
@@ -39,7 +41,19 @@ class GaussianNaiveBayes(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.classes_ = np.unique(y)
+        self.mu_, self.vars_, self.pi_ = np.array([]), np.array([]), np.array([])
+        for c in self.classes_:
+            X_class = X[y == c]
+            mu_class = np.mean(X_class, axis=0)
+            self.mu_ = np.concatenate((self.mu_, mu_class), axis=0)
+
+            # self.vars_ = np.concatenate((self.vars_, np.var(X[y == c], axis=0)))
+            vars_class = np.mean(X_class - mu_class, axis=0)
+            self.vars_ = np.concatenate((self.vars_, vars_class), axis=0)
+
+            self.pi_ = np.append(self.pi_, np.mean(y == 1))
+        self.fitted_ = True
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -55,7 +69,7 @@ class GaussianNaiveBayes(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return np.argmax(self.likelihood(X), axis=1)
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -74,8 +88,9 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-
-        raise NotImplementedError()
+        cov = np.diag(np.sum(self.vars_, axis=0))
+        bias = -0.5 * np.diag(self.mu_ @ cov @ self.mu_.T) + np.log(self.pi_)
+        return X @ cov @ self.mu_.T + bias
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -95,4 +110,5 @@ class GaussianNaiveBayes(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        y_pred = self._predict(X)
+        return misclassification_error(y, y_pred)

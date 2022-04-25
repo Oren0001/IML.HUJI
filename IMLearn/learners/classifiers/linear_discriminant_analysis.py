@@ -25,6 +25,7 @@ class LDA(BaseEstimator):
     self.pi_: np.ndarray of shape (n_classes)
         The estimated class probabilities. To be set in `GaussianNaiveBayes.fit`
     """
+
     def __init__(self):
         """
         Instantiate an LDA classifier
@@ -46,7 +47,26 @@ class LDA(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        self.classes_ = np.unique(y)
+        d = X.shape[1]
+        m = X.shape[0]
+        self.mu_, self.pi_ = np.array([]), np.array([])
+        self.cov_ = np.zeros((d, d))
+        for i, c in enumerate(self.classes_):
+            X_class = X[y == c]
+            mu_class = np.mean(X_class, axis=0)
+            self.mu_ = np.concatenate((self.mu_, mu_class), axis=0)
+            self.pi_ = np.append(self.pi_, np.mean(y == 1))
+            self.cov_ += (X_class - self.mu_[i, :]).T @ (X_class - self.mu_[i, :])
+        self.cov_ /= m
+        self._cov_inv = inv(self.cov_)
+
+        self.fitted_ = True
+
+        # m = y.shape[0]
+        # self.cov_ = ((X[y == 1] - self.mu_[:, 0]).T @ (X[y == 1] - self.mu_[:, 0]) +
+        #              (X[y == -1] - self.mu_[:, 1]).T @ (X[y == -1] - self.mu_[:, 1])) / m
+        # self._cov_inv = inv(self.cov_)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -62,7 +82,8 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return np.argmax(self.likelihood(X), axis=1)
+        # return -2 * pred + 1
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -81,8 +102,8 @@ class LDA(BaseEstimator):
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-
-        raise NotImplementedError()
+        bias = -0.5 * np.diag(self.mu_ @ self._cov_inv @ self.mu_.T) + np.log(self.pi_)
+        return X @ self._cov_inv @ self.mu_.T + bias
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -102,4 +123,5 @@ class LDA(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        y_pred = self._predict(X)
+        return misclassification_error(y, y_pred)
