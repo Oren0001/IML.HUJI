@@ -48,25 +48,19 @@ class LDA(BaseEstimator):
             Responses of input data to fit to
         """
         self.classes_ = np.unique(y)
-        d = X.shape[1]
-        m = X.shape[0]
-        self.mu_, self.pi_ = np.array([]), np.array([])
-        self.cov_ = np.zeros((d, d))
+        n_classes = self.classes_.size
+        m, d = X.shape[0], X.shape[1]
+        self.mu_, self.cov_ = np.zeros((n_classes, d)), np.zeros((d, d))
+        self.pi_ = np.zeros(n_classes)
         for i, c in enumerate(self.classes_):
             X_class = X[y == c]
             mu_class = np.mean(X_class, axis=0)
-            self.mu_ = np.concatenate((self.mu_, mu_class), axis=0)
-            self.pi_ = np.append(self.pi_, np.mean(y == 1))
+            self.mu_[i] = mu_class
+            self.pi_[i] = np.mean(y == 1)
             self.cov_ += (X_class - self.mu_[i, :]).T @ (X_class - self.mu_[i, :])
         self.cov_ /= m
         self._cov_inv = inv(self.cov_)
-
         self.fitted_ = True
-
-        # m = y.shape[0]
-        # self.cov_ = ((X[y == 1] - self.mu_[:, 0]).T @ (X[y == 1] - self.mu_[:, 0]) +
-        #              (X[y == -1] - self.mu_[:, 1]).T @ (X[y == -1] - self.mu_[:, 1])) / m
-        # self._cov_inv = inv(self.cov_)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -83,7 +77,6 @@ class LDA(BaseEstimator):
             Predicted responses of given samples
         """
         return np.argmax(self.likelihood(X), axis=1)
-        # return -2 * pred + 1
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """

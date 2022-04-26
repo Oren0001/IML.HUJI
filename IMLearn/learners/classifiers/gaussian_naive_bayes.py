@@ -42,17 +42,16 @@ class GaussianNaiveBayes(BaseEstimator):
             Responses of input data to fit to
         """
         self.classes_ = np.unique(y)
-        self.mu_, self.vars_, self.pi_ = np.array([]), np.array([]), np.array([])
-        for c in self.classes_:
+        n_classes, d = self.classes_.size, X.shape[1]
+        self.mu_, self.vars_ = np.zeros((n_classes, d)), np.zeros((n_classes, d))
+        self.pi_ = np.zeros(n_classes)
+        for i, c in enumerate(self.classes_):
             X_class = X[y == c]
             mu_class = np.mean(X_class, axis=0)
-            self.mu_ = np.concatenate((self.mu_, mu_class), axis=0)
-
-            # self.vars_ = np.concatenate((self.vars_, np.var(X[y == c], axis=0)))
-            vars_class = np.mean(X_class - mu_class, axis=0)
-            self.vars_ = np.concatenate((self.vars_, vars_class), axis=0)
-
-            self.pi_ = np.append(self.pi_, np.mean(y == 1))
+            self.mu_[i] = mu_class
+            vars_class = np.mean((X_class - mu_class) ** 2, axis=0)
+            self.vars_[i] = vars_class
+            self.pi_[i] = np.mean(y == 1)
         self.fitted_ = True
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
