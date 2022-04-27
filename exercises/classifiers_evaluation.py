@@ -11,8 +11,9 @@ from sklearn.model_selection import train_test_split
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Load dataset for comparing the Gaussian Naive Bayes and LDA classifiers. File is assumed to be an
-    ndarray of shape (n_samples, 3) where the first 2 columns represent features and the third column the class
+    Load dataset for comparing the Gaussian Naive Bayes and LDA classifiers.
+    File is assumed to be an ndarray of shape (n_samples, 3) where the first 2 columns
+    represent features and the third column the class
 
     Parameters
     ----------
@@ -81,7 +82,8 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
     xs = (l1 * np.cos(theta) * np.cos(t)) - (l2 * np.sin(theta) * np.sin(t))
     ys = (l1 * np.sin(theta) * np.cos(t)) + (l2 * np.cos(theta) * np.sin(t))
 
-    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
+    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black",
+                      showlegend=False)
 
 
 def compare_gaussian_classifiers():
@@ -127,8 +129,12 @@ def compare_gaussian_classifiers():
                                      showlegend=False), row=1, col=i)
 
         # Add ellipses depicting the covariances of the fitted Gaussians
+        for i, classifier in enumerate([gnb, lda], 1):
+            for j in range(classifier.classes_.size):
+                fig.add_trace(get_ellipse(classifier.mu_[j], classifier.cov_), row=1, col=i)
 
         fig.show()
+
 
 if __name__ == '__main__':
     np.random.seed(0)

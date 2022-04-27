@@ -56,7 +56,7 @@ class LDA(BaseEstimator):
             X_class = X[y == c]
             mu_class = np.mean(X_class, axis=0)
             self.mu_[i] = mu_class
-            self.pi_[i] = np.mean(y == 1)
+            self.pi_[i] = np.mean(y == c)
             self.cov_ += (X_class - self.mu_[i, :]).T @ (X_class - self.mu_[i, :])
         self.cov_ /= m
         self._cov_inv = inv(self.cov_)

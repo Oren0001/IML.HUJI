@@ -28,6 +28,7 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         super().__init__()
         self.classes_, self.mu_, self.vars_, self.pi_ = None, None, None, None
+        self.cov_ = None
 
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
@@ -49,9 +50,9 @@ class GaussianNaiveBayes(BaseEstimator):
             X_class = X[y == c]
             mu_class = np.mean(X_class, axis=0)
             self.mu_[i] = mu_class
-            vars_class = np.mean((X_class - mu_class) ** 2, axis=0)
+            vars_class = np.sum((X_class - mu_class) ** 2, axis=0) / (X_class.shape[0] - 1)
             self.vars_[i] = vars_class
-            self.pi_[i] = np.mean(y == 1)
+            self.pi_[i] = np.mean(y == c)
         self.fitted_ = True
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
@@ -87,9 +88,9 @@ class GaussianNaiveBayes(BaseEstimator):
         """
         if not self.fitted_:
             raise ValueError("Estimator must first be fitted before calling `likelihood` function")
-        cov = np.diag(np.sum(self.vars_, axis=0))
-        bias = -0.5 * np.diag(self.mu_ @ cov @ self.mu_.T) + np.log(self.pi_)
-        return X @ cov @ self.mu_.T + bias
+        self.cov_ = np.diag(np.sum(self.vars_, axis=0))
+        bias = -0.5 * np.diag(self.mu_ @ self.cov_ @ self.mu_.T) + np.log(self.pi_)
+        return X @ self.cov_ @ self.mu_.T + bias
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
