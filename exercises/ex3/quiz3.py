@@ -33,8 +33,8 @@ if __name__ == '__main__':
 
     # Question 2
     gnb = GaussianNaiveBayes().fit(np.delete(S2, 2, axis=1), S2[:, 2])
-    print(f"The estimated variance of feature 1 in class 0 is: {gnb.vars_[0, 1]}")
-    print(f"The estimated variance of feature 1 in class 1 is: {gnb.vars_[1, 1]}\n")
+    print(f"The estimated variance of feature 1 in class 0 is: {gnb.vars_[0, 0]}")
+    print(f"The estimated variance of feature 1 in class 1 is: {gnb.vars_[1, 0]}\n")
 
     # Question 3
     gnb = GaussianNaiveBayes().fit(np.delete(S1, 1, axis=1), S1[:, 1])
