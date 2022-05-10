@@ -77,21 +77,37 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000, test_size=
     lims = np.array([np.r_[train_X, test_X].min(axis=0),
                      np.r_[train_X, test_X].max(axis=0)]).T + np.array([-.1, .1])
     fig2 = make_subplots(rows=2, cols=2, subplot_titles=[f"Number of Iterations = {i}" for i in T])
+    test_points = go.Scatter(x=test_X[:, 0], y=test_X[:, 1], mode="markers", showlegend=False,
+                             marker=dict(color=test_y, colorscale=[custom[0], custom[-1]]))
     for i, t in enumerate(T):
-        fig2.add_traces(
-            [my_decision_surface(adaboost.partial_predict, lims[0], lims[1], t, showscale=False),
-             go.Scatter(x=test_X[:, 0], y=test_X[:, 1], mode="markers", showlegend=False,
-                        marker=dict(color=test_y, colorscale=[custom[0], custom[-1]]))],
-            rows=(i // 2) + 1, cols=(i % 2) + 1)
+        fig2.add_traces([my_decision_surface(adaboost.partial_predict, lims[0], lims[1], t,
+                                             showscale=False), test_points],
+                        rows=(i // 2) + 1, cols=(i % 2) + 1)
     fig2.update_layout(title=f"Decision Boundaries Using An Ensemble Up To Iterations: {T}",
                        margin=dict(t=100)).update_xaxes(visible=False).update_yaxes(visible=False)
     fig2.show()
 
     # Question 3: Decision surface of best performing ensemble
+    lowest_err = np.argmin(test_errors) + 1
+    accuracy = np.mean(test_y == adaboost.partial_predict(test_X, lowest_err))
+    go.Figure([my_decision_surface(adaboost.partial_predict, lims[0], lims[1],
+                                   lowest_err, showscale=False), test_points],
+              layout=go.Layout(title=f"Ensemble Size = {lowest_err}, Accuracy = {accuracy}",
+                               xaxis={'visible': False}, yaxis={'visible': False},
+                               height=400, width=700)).show()
 
     # Question 4: Decision surface with weighted samples
+    D = adaboost.D_ / np.max(adaboost.D_) * 5
+    train_points = go.Scatter(x=train_X[:, 0], y=train_X[:, 1], mode="markers", showlegend=False,
+                              marker=dict(color=train_y, size=D, colorscale=["Black", "Red"]))
+    go.Figure([my_decision_surface(adaboost.partial_predict, lims[0], lims[1],
+                                   n_learners, showscale=False), train_points],
+              layout=go.Layout(title="Training Set Where a Point Size Is Proportional To It's"
+                                     "Weight, and Colors Are Indicating Labels",
+                               xaxis={'visible': False}, yaxis={'visible': False})).show()
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     fit_and_evaluate_adaboost(0)
+    fit_and_evaluate_adaboost(0.4)
