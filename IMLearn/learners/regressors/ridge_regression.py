@@ -33,7 +33,6 @@ class RidgeRegression(BaseEstimator):
             `LinearRegression.fit` function.
         """
 
-
         """
         Initialize a ridge regression model
         :param lam: scalar value of regularization parameter
@@ -59,39 +58,50 @@ class RidgeRegression(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            ones = np.ones((X.shape[0], 1))
+            X = np.concatenate((ones, X), axis=1)
+        d = X.shape[1]
+        I = np.identity(d)
+        I[0, 0] = 0
+        self.coefs_ = np.linalg.inv((X.T).dot(X) + self.lam_ * I).dot(X.T).dot(y)
 
-    def _predict(self, X: np.ndarray) -> np.ndarray:
-        """
-        Predict responses for given samples using fitted estimator
 
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Input data to predict responses for
+def _predict(self, X: np.ndarray) -> np.ndarray:
+    """
+    Predict responses for given samples using fitted estimator
 
-        Returns
-        -------
-        responses : ndarray of shape (n_samples, )
-            Predicted responses of given samples
-        """
-        raise NotImplementedError()
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Input data to predict responses for
 
-    def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
-        """
-        Evaluate performance under MSE loss function
+    Returns
+    -------
+    responses : ndarray of shape (n_samples, )
+        Predicted responses of given samples
+    """
+    if self.include_intercept_:
+        ones = np.ones((X.shape[0], 1))
+        X = np.concatenate((ones, X), axis=1)
+    return X.dot(self.coefs_)
 
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Test samples
 
-        y : ndarray of shape (n_samples, )
-            True labels of test samples
+def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
+    """
+    Evaluate performance under MSE loss function
 
-        Returns
-        -------
-        loss : float
-            Performance under MSE loss function
-        """
-        raise NotImplementedError()
+    Parameters
+    ----------
+    X : ndarray of shape (n_samples, n_features)
+        Test samples
+
+    y : ndarray of shape (n_samples, )
+        True labels of test samples
+
+    Returns
+    -------
+    loss : float
+        Performance under MSE loss function
+    """
+    return float(np.mean((y - self._predict(X)) ** 2))

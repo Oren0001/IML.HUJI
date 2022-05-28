@@ -6,7 +6,8 @@ from IMLearn import BaseEstimator
 
 
 def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
-                   scoring: Callable[[np.ndarray, np.ndarray, ...], float], cv: int = 5) -> Tuple[float, float]:
+                   scoring: Callable[[np.ndarray, np.ndarray, ...], float],
+                   cv: int = 5) -> Tuple[float, float]:
     """
     Evaluate metric by cross-validation for given estimator
 
@@ -37,4 +38,15 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
     validation_score: float
         Average validation score over folds
     """
-    raise NotImplementedError()
+    sets = np.remainder(np.arange(train_X.size), K)
+    avg_train_err = np.zeros(MAX_DEGREE)
+    avg_validation_err = np.zeros(MAX_DEGREE)
+    for k in range(K):
+        t_x, t_y = train_X[sets != k], train_y[sets != k]
+        v_x, v_y = train_X[sets == k], train_y[sets == k]
+        fitted = [PolynomialFitting(d).fit(t_x, t_y) for d in range(MAX_DEGREE)]
+        train_loss = [fitted[d]._loss(t_x, t_y) for d in range(MAX_DEGREE)]
+        validation_loss = [fitted[d]._loss(v_x, v_y) for d in range(MAX_DEGREE)]
+        avg_train_err += np.array(train_loss) / K
+        avg_validation_err += np.array(validation_loss) / K
+    return avg_train_err, avg_validation_err
