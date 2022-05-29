@@ -3,11 +3,10 @@ import numpy as np
 import pandas as pd
 from sklearn import datasets
 from IMLearn.metrics import mean_square_error
-from IMLearn.utils import split_train_test
+from sklearn.model_selection import train_test_split
 from IMLearn.model_selection import cross_validate
 from IMLearn.learners.regressors import PolynomialFitting, LinearRegression, RidgeRegression
 from sklearn.linear_model import Lasso
-from sklearn.model_selection import train_test_split
 
 from utils import *
 import plotly.graph_objects as go
@@ -15,7 +14,6 @@ from plotly.subplots import make_subplots
 
 MIN_RANGE = -1.2
 MAX_RANGE = 2
-K = 5
 MAX_DEGREE = 11
 
 
@@ -38,40 +36,34 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     eps = np.random.randn(n_samples) * noise
     dataset = f_x + eps
     train_X, test_X, train_y, test_y = train_test_split(x, dataset, train_size=2 / 3)
-    fig1 = make_subplots(rows=1, cols=2, subplot_titles=["True (noiseless) Model",
-                                                         "Train and Test Samples With Noise"])
-    fig1.add_traces([go.Scatter(x=x, y=f_x, mode="markers", showlegend=False),
-                     go.Scatter(x=train_X, y=train_y, mode="markers", name="Train"),
-                     go.Scatter(x=test_X, y=test_y, mode="markers", name="Test")],
-                    rows=[1, 1, 1], cols=[1, 2, 2])
-    fig1.show()
+    fig = make_subplots(rows=1, cols=2, subplot_titles=["True (noiseless) Model",
+                                                        "Train and Test Samples With Noise"])
+    fig.add_traces([go.Scatter(x=x, y=f_x, mode="markers", showlegend=False),
+                    go.Scatter(x=train_X, y=train_y, mode="markers", name="Train"),
+                    go.Scatter(x=test_X, y=test_y, mode="markers", name="Test")],
+                   rows=[1, 1, 1], cols=[1, 2, 2])
+    fig.show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
-    sets = np.remainder(np.arange(train_X.size), K)
     avg_train_err = np.zeros(MAX_DEGREE)
     avg_validation_err = np.zeros(MAX_DEGREE)
-    for k in range(K):
-        t_x, t_y = train_X[sets != k], train_y[sets != k]
-        v_x, v_y = train_X[sets == k], train_y[sets == k]
-        fitted = [PolynomialFitting(d).fit(t_x, t_y) for d in range(MAX_DEGREE)]
-        train_loss = [fitted[d]._loss(t_x, t_y) for d in range(MAX_DEGREE)]
-        validation_loss = [fitted[d]._loss(v_x, v_y) for d in range(MAX_DEGREE)]
-        avg_train_err += np.array(train_loss) / K
-        avg_validation_err += np.array(validation_loss) / K
+    for d in range(MAX_DEGREE):
+        avg_train_err[d], avg_validation_err[d] = cross_validate(PolynomialFitting(d), train_X,
+                                                                 train_y, mean_square_error)
     x_ = np.arange(MAX_DEGREE)
-    fig2 = go.Figure(
+    go.Figure(
         [go.Scatter(x=x_, y=avg_train_err, mode="markers+lines", name="Train Error"),
          go.Scatter(x=x_, y=avg_validation_err, mode="markers+lines", name="Validation Error")],
         layout=go.Layout(title="Average Training and Validation Errors As a Function Of Degrees",
-                         xaxis_title="Degrees", yaxis_title="Avg Errors"))
-    fig2.show()
+                         xaxis_title="Degrees", yaxis_title="Avg Errors")).show()
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
-    best_k = np.argmin(avg_validation_err)
-    print(f"The polynomial degree for which the lowest validation error was achieved is: {best_k}")
-    best_fit = PolynomialFitting(best_k).fit(train_X, train_y)
-    best_error = best_fit._loss(test_X, test_y)
-    print(f"Test error for best value of k is: {round(best_error, 2)}")
+    best_k = int(np.argmin(avg_validation_err))
+    print(f"The polynomial degree for which the lowest validation error was achieved is: {best_k}.")
+    p = PolynomialFitting(best_k)
+    p.fit(train_X, train_y)
+    best_error = mean_square_error(test_y, p.predict(test_X))
+    print(f"Test error for best value of k is: {round(best_error, 2)}.\n")
 
 
 def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 500):
@@ -88,13 +80,53 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
         Number of regularization parameter values to evaluate for each of the algorithms
     """
     # Question 6 - Load diabetes dataset and split into training and testing portions
-    raise NotImplementedError()
+    X, y = datasets.load_diabetes(return_X_y=True)
+    train_X, test_X, train_y, test_y = train_test_split(X, y, train_size=n_samples)
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
-    raise NotImplementedError()
+    lambdas = np.linspace(0, 20, num=n_evaluations)
+    avg_t_err_ridge = np.zeros(n_evaluations)
+    avg_v_err_ridge = np.zeros(n_evaluations)
+    for i, lam in enumerate(lambdas):
+        avg_t_err_ridge[i], avg_v_err_ridge[i] = cross_validate(RidgeRegression(lam), train_X,
+                                                                train_y, mean_square_error)
+
+    avg_t_err_lasso = np.zeros(n_evaluations)
+    avg_v_err_lasso = np.zeros(n_evaluations)
+    for i, lam in enumerate(lambdas):
+        avg_t_err_lasso[i], avg_v_err_lasso[i] = cross_validate(Lasso(lam), train_X,
+                                                                train_y, mean_square_error)
+
+    fig = make_subplots(rows=1, cols=2, subplot_titles=["Ridge", "Lasso"])
+    fig.add_traces(
+        [go.Scatter(x=lambdas, y=avg_t_err_ridge, mode="lines", name="Ridge Train Error"),
+         go.Scatter(x=lambdas, y=avg_v_err_ridge, mode="lines", name="Ridge Validation Error"),
+         go.Scatter(x=lambdas, y=avg_t_err_lasso, mode="lines", name="Lasso Train Error"),
+         go.Scatter(x=lambdas, y=avg_v_err_lasso, mode="lines", name="Lasso Validation Error")],
+        rows=[1, 1, 1, 1], cols=[1, 1, 2, 2])
+    fig.update_xaxes(title_text="Regularization Parameter Values")
+    fig.update_yaxes(title_text="Errors")
+    fig.show()
 
     # Question 8 - Compare best Ridge model, best Lasso model and Least Squares model
-    raise NotImplementedError()
+    best_lam_ridge = lambdas[np.argmin(avg_v_err_ridge)]
+    best_lam_lasso = lambdas[np.argmin(avg_v_err_lasso)]
+    print("The regularization parameter which achieved the best validation error is - \n"
+          f"For Ridge: {best_lam_ridge}.\nFor Lasso: {best_lam_lasso}.\n")
+
+    print("Given these values, test errors are - ")
+    ridge = RidgeRegression(best_lam_ridge)
+    ridge.fit(train_X, train_y)
+    test_err_ridge = mean_square_error(test_y, ridge.predict(test_X))
+    print(f"For Ridge: {test_err_ridge}.")
+    lasso = Lasso(best_lam_lasso)
+    lasso.fit(train_X, train_y)
+    test_err_lasso = mean_square_error(test_y, lasso.predict(test_X))
+    print(f"For Lasso: {test_err_lasso}.")
+    lr = LinearRegression()
+    lr.fit(train_X, train_y)
+    test_err_lr = mean_square_error(test_y, lr.predict(test_X))
+    print(f"For Least Squares: {test_err_lr}.")
 
 
 if __name__ == '__main__':
@@ -102,3 +134,4 @@ if __name__ == '__main__':
     select_polynomial_degree(100, 5)
     select_polynomial_degree(100, 0)
     select_polynomial_degree(1500, 10)
+    select_regularization_parameter()

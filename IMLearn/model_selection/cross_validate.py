@@ -38,15 +38,13 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
     validation_score: float
         Average validation score over folds
     """
-    sets = np.remainder(np.arange(train_X.size), K)
-    avg_train_err = np.zeros(MAX_DEGREE)
-    avg_validation_err = np.zeros(MAX_DEGREE)
-    for k in range(K):
-        t_x, t_y = train_X[sets != k], train_y[sets != k]
-        v_x, v_y = train_X[sets == k], train_y[sets == k]
-        fitted = [PolynomialFitting(d).fit(t_x, t_y) for d in range(MAX_DEGREE)]
-        train_loss = [fitted[d]._loss(t_x, t_y) for d in range(MAX_DEGREE)]
-        validation_loss = [fitted[d]._loss(v_x, v_y) for d in range(MAX_DEGREE)]
-        avg_train_err += np.array(train_loss) / K
-        avg_validation_err += np.array(validation_loss) / K
-    return avg_train_err, avg_validation_err
+    sets = np.remainder(np.arange(X.shape[0]), cv)
+    train_score = 0
+    validation_score = 0
+    for k in range(cv):
+        t_x, t_y = X[sets != k], y[sets != k]
+        v_x, v_y = X[sets == k], y[sets == k]
+        estimator.fit(t_x, t_y)
+        train_score += scoring(t_y, estimator.predict(t_x))
+        validation_score += scoring(v_y, estimator.predict(v_x))
+    return train_score / cv, validation_score / cv
