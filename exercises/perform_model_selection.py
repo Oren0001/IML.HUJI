@@ -84,7 +84,7 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
     train_X, test_X, train_y, test_y = train_test_split(X, y, train_size=n_samples)
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
-    lambdas = np.linspace(0, 20, num=n_evaluations)
+    lambdas = np.linspace(0.0001, 20, num=n_evaluations)
     avg_t_err_ridge = np.zeros(n_evaluations)
     avg_v_err_ridge = np.zeros(n_evaluations)
     for i, lam in enumerate(lambdas):
@@ -134,4 +134,5 @@ if __name__ == '__main__':
     select_polynomial_degree(100, 5)
     select_polynomial_degree(100, 0)
     select_polynomial_degree(1500, 10)
+    np.random.seed(0)
     select_regularization_parameter()
